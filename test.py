@@ -36,10 +36,10 @@ driver.implicitly_wait(5)
 driver.get("http://172.16.0.70")
 #driver.maximize_window()
 
-# error check
+### error check
 assert "GitLab" in driver.title
 
-# fill-in username
+### fill-in username
 user = driver.find_element_by_id("username")
 if user is None:
   print(f"Can't find user in DOM")
@@ -48,7 +48,7 @@ if user is None:
 user.clear()
 user.send_keys(_USERNAME)
 
-# fill-in password
+### fill-in password
 password = driver.find_element_by_id("password")
 if password is None:
   print(f"Can't find password in DOM")
@@ -57,48 +57,54 @@ if password is None:
 password.clear()
 password.send_keys(_PASSWORD)
 
-# set actions handler
+### set actions handler
 actions = ActionChains(driver)
 
 if actions is None:
   print(f"Can't get actions object")
   sys.exit(0)
 
-# perform click login
+### perform click login
 login_btn = driver.find_element_by_name("commit")
 if login_btn is None:
   print(f"Can't find login_btn in DOM")
   sys.exit(0)
     
-# left click -> click(), right click -> context_click()
+### left click -> click(), right click -> context_click()
 actions.move_to_element(login_btn)
 actions.click(login_btn)
 actions.perform()
 
-# error check
+### error check
 assert "Projects" in driver.title
 
 calculates = driver.find_elements_by_class_name("project-name")
 total_len = len(calculates)
 print(f"Total len = {total_len:5}")
 
-index = 0
+### save main window
+main_window = driver.current_window_handle
 
-while index < total_len:
-  driver.refresh()
-  all_projects = driver.find_elements_by_class_name("project-name")
-  item = all_projects[index]
-  print(f"{index} Project name : {item.text}")
-  actions.move_to_element(item)
-  actions.click(item)
-  actions.perform()
+for project in driver.find_elements_by_class_name("project"):
+  ### open new tab 
+  project.send_keys(Keys.CONTROL + Keys.RETURN)
+  ### switch handler to the new tab
+  driver.switch_to_window(driver.window_handles[1])
+  ### find project name
+  project_title = driver.find_element_by_class_name("project-title")
+  if project_title is None:
+    print(f"Can't find project title")
+    sys.exit(0)
+  print(f"Project name : {project_title.text}")
+  ### find project clone address
   clone_addr = driver.find_element_by_name("project_clone")
   if clone_addr is None:
-    print(f"Can't find object")
+    print(f"Can't find clone address")
     sys.exit(0)
-        
   print(f" -> Address : {clone_addr.get_attribute('value')}")
-  index = index + 1
-  driver.back()
-
+  ### close current tab page
+  driver.close()
+  ### handover to main window
+  driver.switch_to_window(main_window)
+  
 driver.close()
