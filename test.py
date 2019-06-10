@@ -4,6 +4,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 
+if len(sys.argv) != 3:
+  print(f'Usage test <USERNAME> <PASSWORD>')
+  sys.exit(0)
+
 _USERNAME = "USERNAME"
 if sys.argv[1] is not None:
     _USERNAME = str(sys.argv[1])
@@ -17,11 +21,10 @@ if sys.argv[2] is not None:
 path = os.path.dirname(os.path.abspath(__file__))
 now = datetime.datetime.now()
 
-#print(f'Current folder : {path}')
-chromedriver_path = path + "/chromedriver"
+chromedriver_path = path + "\chromedriver"
 logfile_path = f'{path}/log_{now.strftime("%Y-%m-%d-%H%M")}.txt'
+#print(f'Chromedriver Path : {chromedriver_path}')
 #print(f'log_pat = {logfile_path}')
-
 
 ### Init a Chrome driver v75
 options = webdriver.ChromeOptions()
