@@ -2,6 +2,7 @@ import os, sys, time, datetime
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 
 _USERNAME = "USERNAME"
 if sys.argv[1] is not None:
@@ -29,8 +30,8 @@ options.add_argument("headless")
 
 driver = webdriver.Chrome(executable_path=chromedriver_path, service_log_path=logfile_path, chrome_options=options)
 
-### set timeout to 5 sec while driver tried to find element
-driver.implicitly_wait(5)
+### set timeout to 3 sec while driver tried to find element
+driver.implicitly_wait(3)
 
 ### open target URL site
 driver.get("http://172.16.0.70")
@@ -40,36 +41,43 @@ driver.get("http://172.16.0.70")
 assert "GitLab" in driver.title
 
 ### fill-in username
-user = driver.find_element_by_id("username")
-if user is None:
-  print(f"Can't find user in DOM")
+try:
+  user = driver.find_element_by_id("username")
+except NoSuchElementException:
+  print(f"Can't find username in DOM")
+  driver.close()
   sys.exit(0)
-    
+
 user.clear()
 user.send_keys(_USERNAME)
 
 ### fill-in password
-password = driver.find_element_by_id("password")
-if password is None:
+try:
+  password = driver.find_element_by_id("password")
+except NoSuchElementException:
   print(f"Can't find password in DOM")
+  driver.close()
   sys.exit(0)
     
 password.clear()
 password.send_keys(_PASSWORD)
 
 ### set actions handler
-actions = ActionChains(driver)
-
-if actions is None:
+try:
+  actions = ActionChains(driver)
+except:
   print(f"Can't get actions object")
+  driver.close()
   sys.exit(0)
-
+  
 ### perform click login
-login_btn = driver.find_element_by_name("commit")
-if login_btn is None:
+try:
+  login_btn = driver.find_element_by_name("commit")
+except NoSuchElementException:
   print(f"Can't find login_btn in DOM")
+  driver.close()
   sys.exit(0)
-    
+  
 ### left click -> click(), right click -> context_click()
 actions.move_to_element(login_btn)
 actions.click(login_btn)
@@ -77,34 +85,43 @@ actions.perform()
 
 ### error check
 assert "Projects" in driver.title
-
-calculates = driver.find_elements_by_class_name("project-name")
-total_len = len(calculates)
-print(f"Total len = {total_len:5}")
-
 ### save main window
 main_window = driver.current_window_handle
 
-for project in driver.find_elements_by_class_name("project"):
-  ### open new tab 
-  project.send_keys(Keys.CONTROL + Keys.RETURN)
-  ### switch handler to the new tab
-  driver.switch_to_window(driver.window_handles[1])
-  ### find project name
-  project_title = driver.find_element_by_class_name("project-title")
-  if project_title is None:
-    print(f"Can't find project title")
-    sys.exit(0)
-  print(f"Project name : {project_title.text}")
-  ### find project clone address
-  clone_addr = driver.find_element_by_name("project_clone")
-  if clone_addr is None:
-    print(f"Can't find clone address")
-    sys.exit(0)
-  print(f" -> Address : {clone_addr.get_attribute('value')}")
-  ### close current tab page
-  driver.close()
-  ### handover to main window
-  driver.switch_to_window(main_window)
+while True:
+  ###[start for]
+  for project in driver.find_elements_by_class_name("project"):
+    ### open new tab 
+    project.send_keys(Keys.CONTROL + Keys.RETURN)
+    ### switch handler to the new tab
+    driver.switch_to_window(driver.window_handles[1])
+    ### find project name
+    
+    try:
+      ### find project name
+      project_title = driver.find_element_by_class_name("project-title")
+      print(f"Project name : {project_title.text}")
+      ### find project clone address
+      clone_addr = driver.find_element_by_name("project_clone")
+      print(f" -> Address : {clone_addr.get_attribute('value')}")
+    except NoSuchElementException:
+      pass
+      
+    ### close current tab page
+    driver.close()
+    ### handover to main window
+    driver.switch_to_window(main_window) 
+  ###[end for]
   
+  ### try to switch to next page
+  try:
+    next_btn = driver.find_element_by_xpath(".//a[@rel='next']")
+    #actions.move_to_element(next_btn)
+    actions.click(next_btn)
+    actions.perform()
+  except NoSuchElementException:
+    break
+    
 driver.close()
+
+
