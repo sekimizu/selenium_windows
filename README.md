@@ -15,6 +15,6 @@ Select target python file and merge it into single executable file
 ## Execute program
 Modify shortcut file(`test_launch`) to setup argument which pass these values while called `test.exe`.
 
-Including USERNAME and PASSWORD to do the login.
+Including __USERNAME__ and __PASSWORD__ to do the login.
 The example using local github server.
 
